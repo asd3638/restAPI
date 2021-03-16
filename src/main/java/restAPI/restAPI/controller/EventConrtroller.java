@@ -1,6 +1,7 @@
 package restAPI.restAPI.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import restAPI.restAPI.domian.Event;
+import restAPI.restAPI.domian.EventDto;
 import restAPI.restAPI.repository.EventRepository;
 import restAPI.restAPI.service.EventService;
 
@@ -21,9 +23,17 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 public class EventConrtroller {
 
     private final EventRepository eventRepository;
+    private final ModelMapper modelMapper;
 
     @PostMapping
-    public ResponseEntity createEvent(@RequestBody Event event) {
+    public ResponseEntity createEvent(@RequestBody EventDto eventDto) {
+        //원래대로라면 eventDto에 받은 값들을 여기서 다시 Event 객체 생성해서 변수들 다 넣어줘야 하는데
+        /*
+        * Event event = Event.Build()
+        *                    .name("어쩌구 저쩌구") ....
+        * 근데 하나 하나 이렇게 넣는 것을 대신 할 수 있는 기능이 있다.
+        * */
+        Event event = modelMapper.map(eventDto, Event.class);
         Event newEvent = eventRepository.save(event);
         URI createdUri = linkTo(EventConrtroller.class).slash(newEvent.getId()).toUri();
 

@@ -1,5 +1,5 @@
 package restAPI.restAPI.domian;
 
 public enum EventStatus {
-    DRAFT, PUBLISHEDM, BEGIN_ENROLLMENT;
+    DRAFT, PUBLISHED, BEGIN_ENROLLMENT;
 }
