@@ -5,5 +5,4 @@ import restAPI.restAPI.domian.Event;
 
 public interface EventRepository extends JpaRepository<Event, Integer> {
 
-
 }

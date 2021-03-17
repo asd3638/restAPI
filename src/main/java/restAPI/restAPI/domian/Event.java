@@ -31,4 +31,14 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private EventStatus eventStatus;
 
+    //도메인 영역에서 처리해도 돼
+    public void update() {
+        if(this.basePrice == 0 && this.maxPrice ==0) {
+            this.free = true;
+        }
+        else {
+            this.free = false;
+        }
+    }
+
 }
