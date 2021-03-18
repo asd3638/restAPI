@@ -2,7 +2,10 @@ package restAPI.restAPI.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import restAPI.restAPI.domian.Event;
 import restAPI.restAPI.domian.EventDto;
 import restAPI.restAPI.repository.EventRepository;
+import restAPI.restAPI.resource.EventResource;
 import restAPI.restAPI.validation.EventValidator;
 
 import javax.validation.Valid;
@@ -55,9 +59,19 @@ public class EventController {
         //save 하기 전에 update 하면서 값에 대한 변화
         event.update();
         Event newEvent = eventRepository.save(event);
-        URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
 
-        return ResponseEntity.created(createdUri).body(event);
+        WebMvcLinkBuilder selfLinkBuilder = linkTo(EventController.class).slash(newEvent.getId());
+        URI createdUri = selfLinkBuilder.toUri();
+
+        EventResource eventResource = new EventResource(event);
+        //event를 eventResource로 변환하면 링크를 추가할 수 있다.
+        eventResource.add(linkTo(EventController.class).withRel("query_events"));
+        //수정이나 자기자신이나 링크는 같은데 담고 있는 정보가 다르다?
+        //이거 뭔 말인지 모르겠음!
+        eventResource.add(selfLinkBuilder.withSelfRel());
+        eventResource.add(selfLinkBuilder.withRel("update_event"));
+
+        return ResponseEntity.created(createdUri).body(eventResource);
         //원래 연습했던 거랑 똑같은데 그 때는 html로 직접 보냈다면 지금은 응답  api로 변환해서 보내준다.
     }
 }

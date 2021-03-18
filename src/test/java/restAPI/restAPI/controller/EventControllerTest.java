@@ -1,4 +1,4 @@
-package restAPI.restAPI.events;
+package restAPI.restAPI.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import restAPI.restAPI.common.TestDescription;
 import restAPI.restAPI.domian.Event;
 import restAPI.restAPI.domian.EventDto;
+import restAPI.restAPI.domian.EventStatus;
 import restAPI.restAPI.repository.EventRepository;
 
 import java.time.LocalDateTime;
@@ -47,9 +48,9 @@ public class EventControllerTest {
                             .name("Spring")
                             .description("RestAPI")
                             .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
-                            .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
-                            .beginEventDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
-                            .endEventDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
+                            .closeEnrollmentDateTime(LocalDateTime.of(2028, 11, 24, 10, 10))
+                            .beginEventDateTime(LocalDateTime.of(2018, 11, 20, 9, 10))
+                            .endEventDateTime(LocalDateTime.of(2030, 11, 20, 8, 10))
                             .basePrice(100)
                             .maxPrice(200)
                             .limitOfEnrollment(100)
@@ -63,7 +64,6 @@ public class EventControllerTest {
                 )
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("id").exists())
                 .andExpect(header().exists(HttpHeaders.LOCATION))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
                 .andExpect(jsonPath("id").value(Matchers.not(100)))
@@ -74,6 +74,14 @@ public class EventControllerTest {
                 //아무 값이나 그냥 입력 됐다고 저장하면 절대 안된다.
                 //그 로직에 맞게 저장하는 방법은 event를 controller로 보낼 때 EventDto와 같은 출력 폼에 따로 담아서 보내고 (새로운 객체 생성)
                 //controller에서 그걸 다시 매핑하면 원래 만들어놨던 로직대로 데이터를 저장할 수 있다.
+
+                //==링크 정보 제대로 받는지에 대한 테스트 코드==//
+                //link에 self, query-events, update-events 등이 있는지 확인하는 것이다.
+                //세 가지의 링크가 응답으로 나오길 기대한다.
+                //클라이언트가 json형식의 응답을 보고 어디로 전이할지 선택할 수 있어야 하는데 그걸 가능하게 하는 기능들을 포함하는게 hateoas이다.
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.query_events").exists())
+                .andExpect(jsonPath("_links.update_event").exists())
         ;
     }
 
@@ -162,14 +170,13 @@ public class EventControllerTest {
         EventDto eventDto = EventDto.builder()
                 .name("Spring")
                 .description("RestAPI")
-                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 24, 10, 10))
-                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 20, 10, 10))
+                .closeEnrollmentDateTime(LocalDateTime.of(2028, 11, 24, 10, 10))
                 .beginEventDateTime(LocalDateTime.of(2018, 11, 20, 9, 10))
-                .endEventDateTime(LocalDateTime.of(2018, 11, 20, 8, 10))
-                .basePrice(0)
-                .maxPrice(0)
+                .endEventDateTime(LocalDateTime.of(2030, 11, 20, 8, 10))
+                .basePrice(200)
+                .maxPrice(300)
                 .limitOfEnrollment(100)
-                .location("강남역")
                 .build();
 
         //when
@@ -177,10 +184,12 @@ public class EventControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andExpect(status().isCreated())
-                .andDo(print());
-        ;
+                .andDo(print())
         //then
-
+                .andExpect(jsonPath("free").value(false))
+                .andExpect(jsonPath("offline").value(true))
+                .andExpect(jsonPath("eventStatus").value(EventStatus.PUBLISHED.name()))
+                ;
     }
 
 }
