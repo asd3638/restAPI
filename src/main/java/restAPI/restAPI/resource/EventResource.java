@@ -1,15 +1,17 @@
 package restAPI.restAPI.resource;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import restAPI.restAPI.controller.EventController;
 import restAPI.restAPI.domian.Event;
 
-@Getter
-@RequiredArgsConstructor
-public class EventResource extends RepresentationModel {
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
-    @JsonUnwrapped
-    private final Event event;
+public class EventResource extends EntityModel<Event> {
+
+    public EventResource(Event event, Link... links) {
+        super(event, links);
+        //리소스 자체에 자기 자신에 대한 링크를 추가하도록 생성자 안에 add 넣어버림
+        add(linkTo(EventController.class).slash(event.getId()).withSelfRel());
+    }
 }
