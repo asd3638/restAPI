@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 public class Event {
 
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Integer id;
 
     private String name;
@@ -30,6 +31,9 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     private EventStatus eventStatus;
+
+    @ManyToOne
+    private Account manager;
 
     private LocalDateTime nowDateTime = LocalDateTime.now();
 
