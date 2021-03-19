@@ -40,4 +40,18 @@ public class EventDto {
     private int maxPrice;
     @Min(0)
     private int limitOfEnrollment;
+
+    public EventDto (String name, String description, int basePrice, int maxPrice, LocalDateTime beginEventDateTime, LocalDateTime endEventDateTime, LocalDateTime beginEnrollmentDateTime, LocalDateTime closeEnrollmentDateTime, String location, int limitOfEnrollment) {
+
+        this.setName(name);
+        this.setDescription(description);
+        this.setBasePrice(basePrice);
+        this.setMaxPrice(maxPrice);
+        this.setBeginEventDateTime(beginEventDateTime);
+        this.setEndEventDateTime(endEventDateTime);
+        this.setBeginEnrollmentDateTime(beginEnrollmentDateTime);
+        this.setCloseEnrollmentDateTime(closeEnrollmentDateTime);
+        this.setLocation(location);
+        this.setLimitOfEnrollment(limitOfEnrollment);
+    }
 }

@@ -3,6 +3,7 @@ package restAPI.restAPI.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -22,21 +23,37 @@ import restAPI.restAPI.resource.EventResource;
 import restAPI.restAPI.validation.EventValidator;
 
 import javax.validation.Valid;
+import javax.xml.bind.annotation.XmlElementDecl;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @Controller
 @RequestMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
-//
-@RequiredArgsConstructor
-@Log4j
 public class EventController {
 
     private final EventRepository eventRepository;
-    private final EventValidator eventValidator;
+
     private final ModelMapper modelMapper;
+
+    private final EventValidator eventValidator;
+
+    @Autowired
+    public EventController(EventRepository eventRepository, ModelMapper modelMapper, EventValidator eventValidator) {
+        this.eventRepository = eventRepository;
+        this.modelMapper = modelMapper;
+        this.eventValidator = eventValidator;
+    }
+
+    @GetMapping
+    public ResponseEntity queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+        Page<Event> page = this.eventRepository.findAll(pageable);
+        PagedModel<EntityModel<Event>> models = assembler.toModel(page, e -> new EventResource(e));
+        return ResponseEntity.ok(models);
+    }
 
 
     @PostMapping
@@ -73,31 +90,27 @@ public class EventController {
         eventResource.add(linkTo(EventController.class).withRel("query_events"));
         //수정이나 자기자신이나 링크는 같은데 담고 있는 정보가 다르다?
         //이거 뭔 말인지 모르겠음!
-        eventResource.add(selfLinkBuilder.withSelfRel());
         eventResource.add(selfLinkBuilder.withRel("update_event"));
 
         return ResponseEntity.created(createdUri).body(eventResource);
         //원래 연습했던 거랑 똑같은데 그 때는 html로 직접 보냈다면 지금은 응답  api로 변환해서 보내준다.
     }
 
-    @GetMappingq
-    public ResponseEntity queryEvents(Pageable pageable,
-                                      PagedResourcesAssembler<Event> assembler) {
-        Page<Event> page = this.eventRepository.findAll(pageable);
-        //var pagedResources = assembler.toModel(page, e -> new EventResource(e));
-        PagedModel<EntityModel<Event>> models = assembler.toModel(page);
-        return ResponseEntity.ok(models);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity getEvent(@PathVariable Integer id) {
-        Optional<Event> optionalEvent = this.eventRepository.findById(id);
+        /*EventDto eventDto = new EventDto("test1", "test1description", 1, 2, LocalDateTime.of(2018, 11, 20, 10, 10), LocalDateTime.of(2018, 11, 21, 10, 10), LocalDateTime.of(2018, 11, 20, 10, 10), LocalDateTime.of(2018, 11, 21, 10, 10), "강남역", 100);
+        Event event = modelMapper.map(eventDto, Event.class);
+        Event savedEvent = eventRepository.save(event);
+        System.out.println(savedEvent.getId() + "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");*/
+
+        Optional<Event> optionalEvent = eventRepository.findById(id);
         //optional은 만약에 null값을 읽었을 때 오류 메세지 제대로 전달할 수 있기 위한 클래스라고 보면 된다.
         if (optionalEvent.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Event event = optionalEvent.get();
-        return ResponseEntity.ok(new EventResource(event));
+        Event updatedEvent = optionalEvent.get();
+
+        return ResponseEntity.ok(new EventResource(updatedEvent));
     }
 
     @PutMapping("/{id}")
@@ -105,6 +118,7 @@ public class EventController {
                                       @RequestBody @Valid EventDto eventDto,
                                       Errors errors) {
         Optional<Event> optionalEvent = this.eventRepository.findById(id);
+
         if (optionalEvent.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -114,13 +128,16 @@ public class EventController {
         }
 
         this.eventValidator.validate(eventDto, errors);
+
         if (errors.hasErrors()) {
             return badRequest(errors);
         }
 
-        Event savedEvent = this.eventRepository.save(this.modelMapper.map(eventDto, Event.class));
+        Event savedEvent = optionalEvent.get();
+        savedEvent.setName(eventDto.getName());
+        Event memorySavedEvent = eventRepository.save(savedEvent);
 
-        EventResource eventResource = new EventResource(savedEvent);
+        EventResource eventResource = new EventResource(memorySavedEvent);
 
         return ResponseEntity.ok(eventResource);
     }

@@ -44,9 +44,9 @@ public class Event {
         }
         //offline
         if (this.location.isBlank() || this.location == null) {
-            this.offline = true;
-        } else {
             this.offline = false;
+        } else {
+            this.offline = true;
         }
         //eventStatus
         if (nowDateTime.isBefore(this.getBeginEnrollmentDateTime())) {
