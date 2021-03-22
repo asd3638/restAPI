@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import restAPI.restAPI.common.AppProperties;
 import restAPI.restAPI.domian.Account;
 import restAPI.restAPI.domian.AccountRole;
 import restAPI.restAPI.service.AccountService;
@@ -17,8 +18,6 @@ import java.util.Set;
 @Configuration
 public class AppConfig {
 
-    //얘는 의존성 주입은 아니고 그냥 빈 등록만 해준다.
-    //어디선가 autowired 로 선언해서 등록하기 애매한 애들은 config 파일 안에서 수동 등록해줄 수 있다.
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();
@@ -36,14 +35,25 @@ public class AppConfig {
             @Autowired
             AccountService accountService;
 
+            @Autowired
+            AppProperties appProperties;
+
+
             @Override
             public void run(ApplicationArguments args) throws Exception {
-                Account jihye = Account.builder()
-                        .email("jihye@naver.com")
-                        .password("123")
+                Account admin = Account.builder()
+                        .email(appProperties.getAdminUsername())
+                        .password(appProperties.getAdminPassword())
                         .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
                         .build();
-                accountService.saveAccount(jihye);
+                accountService.saveAccount(admin);
+
+                Account user = Account.builder()
+                        .email(appProperties.getUserUsername())
+                        .password(appProperties.getUserPassword())
+                        .roles(Set.of(AccountRole.USER))
+                        .build();
+                accountService.saveAccount(user);
             }
         };
     }
